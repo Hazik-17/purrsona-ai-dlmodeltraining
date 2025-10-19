@@ -1,0 +1,4 @@
+Dart SDK 3.8.1
+Flutter stable 3.35.6
+Android SDK version 36.0.0
+Android Studio 2025.1.2
