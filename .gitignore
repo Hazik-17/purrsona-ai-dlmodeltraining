@@ -1,0 +1,42 @@
+# ----------------------------------------------------------------------
+# 1. PYTHON / VIRTUAL ENVIRONMENT EXCLUSIONS
+# ----------------------------------------------------------------------
+# Your virtual environment folder
+fyp_env/
+# Python bytecode and cache
+__pycache__/
+*.pyc
+
+# ----------------------------------------------------------------------
+# 2. DATA AND GENERATED OUTPUT EXCLUSIONS
+# ----------------------------------------------------------------------
+# Ignore large raw data and generated output from the preprocessingDataset folder
+preprocessingDataset/images/
+preprocessingDataset/annotations/
+preprocessingDataset/cropped_images/
+preprocessingDataset/output/
+preprocessingDataset/output_3breeds/
+preprocessingDataset/output_cropped/
+
+# ----------------------------------------------------------------------
+# 3. FLUTTER / DART APPLICATION EXCLUSIONS
+# ----------------------------------------------------------------------
+# The main build output folder for your Flutter app
+catbreed_application_v1/build/
+
+# Other standard Flutter/Dart temporary files
+catbreed_application_v1/.dart_tool/
+catbreed_application_v1/.flutter-plugins-dependencies
+catbreed_application_v1/.pub-cache/
+catbreed_application_v1/ios/.symlinks/
+catbreed_application_v1/android/.gradle/
+
+# ----------------------------------------------------------------------
+# 4. IDE and OS Exclusions
+# ----------------------------------------------------------------------
+.vscode/     # VS Code configuration
+.idea/       # IntelliJ/Android Studio configuration
+*.iml        # IntelliJ module files
+.DS_Store    # macOS metadata
+*.log        # Log files
+*.swp        # Vim temporary files
