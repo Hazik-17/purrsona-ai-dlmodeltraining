@@ -31,6 +31,14 @@ catbreed_application_v1/.pub-cache/
 catbreed_application_v1/ios/.symlinks/
 catbreed_application_v1/android/.gradle/
 
+# ADDITIONS FROM AUTO-GENERATED LIST:
+catbreed_application_v1/coverage/
+catbreed_application_v1/doc/api/
+catbreed_application_v1/ios/Flutter/.last_build_id
+catbreed_application_v1/android/app/debug/
+catbreed_application_v1/android/app/profile/
+catbreed_application_v1/android/app/release/
+
 # ----------------------------------------------------------------------
 # 4. IDE and OS Exclusions
 # ----------------------------------------------------------------------
