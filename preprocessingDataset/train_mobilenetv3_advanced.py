@@ -17,15 +17,15 @@ from sklearn.metrics import classification_report
 DATA_DIR = 'preprocessingDataset\\output'
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 16
-EPOCHS_PHASE1 = 30
-EPOCHS_PHASE2 = 50
+EPOCHS_PHASE1 = 20
+EPOCHS_PHASE2 = 30
 LR_PHASE1 = 1e-3
 LR_PHASE2 = 8e-6
-EARLYSTOP_PATIENCE = 15
+EARLYSTOP_PATIENCE = 10
 LABEL_SMOOTHING = 0.1 
 DROPOUT_RATE = 0.5      
 DENSE_UNITS = 256       
-UNFREEZE_LAYERS = 50    
+UNFREEZE_LAYERS = 50     
 
 # === Check class distributions ===
 def print_class_distribution(data_dir, subset):
@@ -108,20 +108,19 @@ base_model.trainable = False
 model = Sequential([
     base_model,
     GlobalAveragePooling2D(),
-    Dense(DENSE_UNITS, activation='relu', kernel_regularizer=l2(0.001)),
+    Dense(DENSE_UNITS, activation='relu', kernel_regularizer=l2(0.001)), # <--- CHANGE
     BatchNormalization(),
     Dropout(DROPOUT_RATE),                                            
     Dense(num_classes, activation='softmax')
 ])
 
-early_stop = EarlyStopping(monitor='val_loss', patience=EARLYSTOP_PATIENCE, restore_best_weights=True) # <--- CHANGE
-reduce_lr = ReduceLROnPlateau(monitor='val_loss', patience=7, factor=0.5, min_lr=1e-8, verbose=1) # <--- CHANGE
+early_stop = EarlyStopping(monitor='val_loss', patience=EARLYSTOP_PATIENCE, restore_best_weights=True) 
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.5, min_lr=1e-8, verbose=1) # <--- CHANGE
 
 # === Phase 1: Train top layers only ===
 print("\n🔁 Starting Phase 1: Train top layers only")
 model.compile(
     optimizer=Adam(learning_rate=LR_PHASE1),
-    # <--- CHANGE: Apply label smoothing
     loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=LABEL_SMOOTHING),
     metrics=['accuracy']
 )
@@ -151,7 +150,7 @@ plt.show()
 
 # === Phase 2: Fine-tune last 50 layers ===
 print(f"\n🔁 Starting Phase 2: Fine-tuning last {UNFREEZE_LAYERS} layers")
-for layer in base_model.layers[-UNFREEZE_LAYERS:]: # <--- CHANGE
+for layer in base_model.layers[-UNFREEZE_LAYERS:]: 
     if not isinstance(layer, BatchNormalization):
         layer.trainable = True
 
@@ -206,8 +205,8 @@ train_loss, train_accuracy = model.evaluate(train_generator, verbose=2)
 print(f"Training accuracy: {train_accuracy * 100:.2f}%")
 
 # === Save the trained model ===
-model.save('cat_breed_mobilenetv3_training_corrected.h5')
-print("\n💾 Model saved as 'cat_breed_mobilenetv3_training_corrected.h5'")
+model.save('cat_breed_mobilenetv3.keras')
+print("\n💾 Model saved as 'cat_breed_mobilenetv3.keras'")
 
 # === Add this to the end of your training script ===
 import json
