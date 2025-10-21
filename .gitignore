@@ -7,6 +7,12 @@ fyp_env/
 __pycache__/
 *.pyc
 
+# Model training outputs
+trainingProof/
+others_animal/
+similar_breed_dataset/
+cat_vs_not_cat_dataset/
+
 # ----------------------------------------------------------------------
 # 2. DATA AND GENERATED OUTPUT EXCLUSIONS
 # ----------------------------------------------------------------------
