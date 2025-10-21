@@ -1,0 +1,124 @@
+📊 Final evaluation on test set:
+30/30 - 2s - 56ms/step - accuracy: 0.8295 - loss: 0.6689
+✅ Test accuracy: 82.95%
+30/30 - 3s - 91ms/step
+
+Classification Report:
+              precision    recall  f1-score   support
+
+  Abyssinian     0.9211    0.8750    0.8974        40
+      Bengal     0.9333    0.7000    0.8000        40
+      Birman     0.6852    0.9250    0.7872        40
+      Bombay     1.0000    0.9459    0.9722        37
+     British     0.7347    0.9000    0.8090        40
+    Egyptian     0.8333    0.9211    0.8750        38
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+
+    accuracy                         0.8295       475
+   macro avg     0.8402    0.8306    0.8308       475
+weighted avg     0.8392    0.8295    0.8297       475
+
+
+Evaluating training accuracy:
+285/285 - 37s - 128ms/step - accuracy: 0.9583 - loss: 0.2278
+Training accuracy: 95.83%
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+
+    accuracy                         0.8295       475
+   macro avg     0.8402    0.8306    0.8308       475
+weighted avg     0.8392    0.8295    0.8297       475
+
+
+Evaluating training accuracy:
+285/285 - 37s - 128ms/step - accuracy: 0.9583 - loss: 0.2278
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+
+    accuracy                         0.8295       475
+   macro avg     0.8402    0.8306    0.8308       475
+weighted avg     0.8392    0.8295    0.8297       475
+
+
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+
+    accuracy                         0.8295       475
+   macro avg     0.8402    0.8306    0.8308       475
+weighted avg     0.8392    0.8295    0.8297       475
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+
+    accuracy                         0.8295       475
+   macro avg     0.8402    0.8306    0.8308       475
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+       Maine     0.7073    0.7250    0.7160        40
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+       Maine     0.7073    0.7250    0.7160        40
+       Maine     0.7073    0.7250    0.7160        40
+       Maine     0.7073    0.7250    0.7160        40
+     Persian     0.7368    0.7000    0.7179        40
+     Persian     0.7368    0.7000    0.7179        40
+     Ragdoll     0.8000    0.7000    0.7467        40
+     Russian     0.8158    0.7750    0.7949        40
+     Siamese     0.9143    0.8000    0.8533        40
+      Sphynx     1.0000    1.0000    1.0000        40
+
+    accuracy                         0.8295       475
+   macro avg     0.8402    0.8306    0.8308       475
+weighted avg     0.8392    0.8295    0.8297       475
+
+
+Evaluating training accuracy:
+285/285 - 37s - 128ms/step - accuracy: 0.9583 - loss: 0.2278
+Training accuracy: 95.83%
