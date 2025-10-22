@@ -2,19 +2,18 @@ import os
 import tensorflow as tf
 
 # --- Configuration ---
-# This dictionary maps your final .keras model files to their desired .tflite output names.
-# !! IMPORTANT !!
-# Make sure the keys (e.g., 'breed_expert_model_86_32.keras') EXACTLY match your saved model filenames.
+# This dictionary has been updated to match your new filenames.
+# It maps your final .keras model files to their desired .tflite output names.
 
 MODELS_TO_CONVERT = {
-    # --- The Gatekeeper Model ---
-    'gatekeeper_cat_vs_not_cat.keras': 'gatekeeper_model.tflite',
+    # 1. The Gatekeeper Model
+    'cat_vs_not_cat.keras': 'gatekeeper_model.tflite',
     
-    # --- The Generalist 12-Breed Model ---
-    'breed_expert_model_86_32.keras': 'generalist_breed_model.tflite',
+    # 2. The Generalist 12-Breed Model
+    'breed_expert_mobilenetV3.keras': 'generalist_breed_model.tflite',
 
-    # --- The Specialized 5-Breed Expert Model ---
-    'similar_breed_expert.keras': 'similar_breed_expert_model.tflite'
+    # 3. The Specialized 5-Breed Expert Model
+    'similar_breed.keras': 'similar_breed_expert_model.tflite'
 }
 
 def convert_model_to_tflite(keras_model_path, tflite_model_path):
@@ -24,11 +23,13 @@ def convert_model_to_tflite(keras_model_path, tflite_model_path):
     print(f"\n--- Converting '{keras_model_path}' ---")
 
     if not os.path.exists(keras_model_path):
-        print(f"❌ ERROR: Model file not found at '{keras_model_path}'. Skipping.")
+        print(f"❌ ERROR: Model file not found at '{keras_model_path}'.")
+        print("   Please check that the filename is correct and it's in the same directory.")
+        print("   Skipping this conversion.")
         return
 
     try:
-        # Load the Keras model. The .keras format handles custom objects automatically.
+        # Load the Keras model
         print("  - Loading Keras model...")
         model = tf.keras.models.load_model(keras_model_path, compile=False)
 
@@ -36,14 +37,14 @@ def convert_model_to_tflite(keras_model_path, tflite_model_path):
         print("  - Initializing TFLite converter...")
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         
-        # (Optional) Apply optimizations. Default is a good balance.
+        # Apply default optimizations for size and speed
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
         # Perform the conversion
         print("  - Converting to TensorFlow Lite...")
         tflite_model = converter.convert()
 
-        # Save the .tflite model to a file
+        # Save the .tflite model
         with open(tflite_model_path, 'wb') as f:
             f.write(tflite_model)
         
