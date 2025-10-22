@@ -1,0 +1,9 @@
+
+//to test main model
+python test_model_universal.py "output\Abyssinian\Abyssinian_50.jpg" --model "breed_expert_mobilenetV3_85_68.keras" --labels "breed_expert_class_indices.json"  
+
+//to test similar breed model
+python test_model_universal.py "output\Ragdoll\Ragdoll_5.jpg" --model "similar_breed_expert.keras" --labels "similar_breed_class_indices.json" 
+
+//to test non-cat model
+python test_non_cat.py "others_animal\dog\1c768b0135.jpg" --model "old_cat_vs_not_cat.keras" --labels "old_non_cat_class_indices.json"
