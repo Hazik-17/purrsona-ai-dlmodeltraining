@@ -41,6 +41,10 @@ This repository contains the model training pipeline for a cat-breed detection s
 - Similar-breed dataset: [preprocessingDataset/similar_breed_dataset](preprocessingDataset/similar_breed_dataset) — contains a 5-class train/test split for fine-grained expert training.
 - Binary (cat vs not-cat) dataset: [preprocessingDataset/cat_vs_not_cat_dataset](preprocessingDataset/cat_vs_not_cat_dataset) with `train/cat`, `train/not_cat`, and `test/` folders.
 
+- Other-animal dataset (source for `not_cat` class): A public Kaggle dataset with 90 different animals which is used to build the `not_cat` class when preparing the binary dataset. Download from: https://www.kaggle.com/datasets/iamsouravbanerjee/animal-image-dataset-90-different-animals
+
+  Note: Set the `NOT_CAT_SOURCE_DIR` variable in `preprocessingDataset/gpu_train_model/binary_dataset_preparation.py` (or copy the downloaded folders into `preprocessingDataset/others_animal`) before running the binary dataset preparation script.
+
 ## Training Process
 - Framework: TensorFlow / Keras (tf.keras). See examples: [preprocessingDataset/gpu_train_model/efficientnetV2B0/train_breed_expert_efficientnetv2b0.py](preprocessingDataset/gpu_train_model/efficientnetV2B0/train_breed_expert_efficientnetv2b0.py), [preprocessingDataset/gpu_train_model/resnet50/train_breed_expert_resnet_v1.py](preprocessingDataset/gpu_train_model/resnet50/train_breed_expert_resnet_v1.py), [preprocessingDataset/gpu_train_model/mobilenet_v3/large/train_breed_expert.py](preprocessingDataset/gpu_train_model/mobilenet_v3/large/train_breed_expert.py).
 - Image size: 224×224 (consistent across scripts).
