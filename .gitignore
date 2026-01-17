@@ -7,16 +7,12 @@ fyp_env/
 __pycache__/
 *.pyc
 
-# Model training outputs
-trainingProof/
-others_animal/
-similar_breed_dataset/
-cat_vs_not_cat_dataset/
-
 # ----------------------------------------------------------------------
-# 2. DATA AND GENERATED OUTPUT EXCLUSIONS
+# 1. DATASET FOLDERS TO BE EXCLUDED
 # ----------------------------------------------------------------------
-# Ignore large raw data and generated output from the preprocessingDataset folder
+preprocessingDataset/cat_vs_not_cat_dataset
+preprocessingDataset/others_animal
+preprocessingDataset/similar_breed_dataset
 preprocessingDataset/images/
 preprocessingDataset/annotations/
 preprocessingDataset/cropped_images/
@@ -25,32 +21,7 @@ preprocessingDataset/output_3breeds/
 preprocessingDataset/output_cropped/
 
 # ----------------------------------------------------------------------
-# 3. FLUTTER / DART APPLICATION EXCLUSIONS
-# ----------------------------------------------------------------------
-# The main build output folder for your Flutter app
-catbreed_application_v1/build/
-
-# Other standard Flutter/Dart temporary files
-catbreed_application_v1/.dart_tool/
-catbreed_application_v1/.flutter-plugins-dependencies
-catbreed_application_v1/.pub-cache/
-catbreed_application_v1/ios/.symlinks/
-catbreed_application_v1/android/.gradle/
-
-# ADDITIONS FROM AUTO-GENERATED LIST:
-catbreed_application_v1/coverage/
-catbreed_application_v1/doc/api/
-catbreed_application_v1/ios/Flutter/.last_build_id
-catbreed_application_v1/android/app/debug/
-catbreed_application_v1/android/app/profile/
-catbreed_application_v1/android/app/release/
-
-# ----------------------------------------------------------------------
-# 4. IDE and OS Exclusions
+# 3. IDE AND MISCELLANEOUS EXCLUSIONS
 # ----------------------------------------------------------------------
 .vscode/     # VS Code configuration
-.idea/       # IntelliJ/Android Studio configuration
-*.iml        # IntelliJ module files
-.DS_Store    # macOS metadata
 *.log        # Log files
-*.swp        # Vim temporary files
