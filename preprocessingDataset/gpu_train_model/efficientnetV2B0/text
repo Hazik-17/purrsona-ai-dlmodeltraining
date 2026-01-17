@@ -10,4 +10,3 @@ python single_conversion..py breed_expert_efficientnetv2b0_v2.keras generalist_b
 ```bash
 python single_conversion..py similar_breed_expert_effnet_v1.keras similar_breed_expert_model.tflite
 
-This gives you full control. If you re-train your "Expert" model, you only need to run command #3, and it won't touch your other two `.tflite` files. This is a much safer and more efficient workflow.

@@ -9,33 +9,26 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D, BatchNormalization
 from tensorflow.keras.regularizers import l2
 
-# ==========================================
-# CONFIGURATION
-# ==========================================
+# Paths and simple settings
 INPUT_MODEL_PATH = 'breed_expert_efficientnetv2b0_v2.keras'
 OUTPUT_TFLITE_PATH = 'generalist_breed_model.tflite'
 
-# Must match your training script exactly
+# Must match training script
 IMG_SIZE = (224, 224)
 DENSE_UNITS = 256
 DROPOUT_RATE = 0.5
-NUM_CLASSES = 12 
+NUM_CLASSES = 12
 
 def transplant_and_convert():
-    print(f"--- Performing Weight Transplant for {INPUT_MODEL_PATH} ---")
+    """Build a clean model, copy weights from trained file, and export TFLite."""
 
-    # 1. Force Float32 Policy (Global)
+    print(f"Starting transplant for {INPUT_MODEL_PATH}")
     tf.keras.mixed_precision.set_global_policy('float32')
 
     try:
-        # 2. Build a FRESH, CLEAN Model Architecture
-        print("  [1] Building fresh model architecture...")
-        
-        base_model = EfficientNetV2B0(
-            input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
-            include_top=False,
-            weights='imagenet' 
-        )
+        # Build a fresh model with the same shape as training
+        print("Building model architecture...")
+        base_model = EfficientNetV2B0(input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3), include_top=False, weights='imagenet')
         base_model.trainable = False
 
         clean_model = Sequential([
@@ -46,57 +39,44 @@ def transplant_and_convert():
             Dropout(DROPOUT_RATE),
             Dense(NUM_CLASSES, activation='softmax', dtype='float32')
         ])
-        
-        # --- THE FIX: Initialize layers with a dummy pass instead of .build() ---
-        print("  [1b] Initializing layers...")
-        # We run one fake image through the model. This forces Keras to 
-        # initialize the Dense/BatchNormal layers with the correct shapes.
+
+        # Initialize layers by running one fake input through the model
         dummy_input = tf.ones((1, 224, 224, 3))
         _ = clean_model(dummy_input)
 
-        # 3. Load the OLD model just to grab weights
-        print("  [2] Loading old model to extract weights...")
+        # Load trained model to get weights
+        print("Loading trained model weights...")
         old_model = tf.keras.models.load_model(INPUT_MODEL_PATH, compile=False)
-        
-        # 4. TRANSPLANT WEIGHTS
-        print("  [3] Transplanting weights...")
+
+        # Try to copy weights into clean model
+        print("Transplanting weights...")
         try:
             clean_model.set_weights(old_model.get_weights())
         except ValueError as ve:
-            print("\n!!! SHAPE MISMATCH !!!")
-            print("Your trained model has a different structure than this script.")
-            print("Check NUM_CLASSES or DENSE_UNITS settings.")
+            print("Shape mismatch: check NUM_CLASSES or DENSE_UNITS.")
             raise ve
 
-        # 5. Convert the CLEAN model
-        print("  [4] Initializing Converter on clean model...")
+        # Convert the model to TFLite
+        print("Converting to TFLite...")
         converter = tf.lite.TFLiteConverter.from_keras_model(clean_model)
-        
-        # PURE TFLITE SETTINGS
         converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS]
         converter.target_spec.supported_types = [tf.float32]
-        
-        # OPTIONAL: Define Static Input Shape for TFLite
-        # This helps preventing the "FlexOps" auto-selection
+
         def representative_dataset_gen():
             for _ in range(1):
                 yield [np.zeros((1, 224, 224, 3), dtype=np.float32)]
         converter.representative_dataset = representative_dataset_gen
 
-        print("  [5] Converting... (Please wait)")
         tflite_model = converter.convert()
 
-        # 6. Save
         with open(OUTPUT_TFLITE_PATH, "wb") as f:
             f.write(tflite_model)
 
         size_mb = len(tflite_model) / (1024 * 1024)
-        print(f"\n✅ SUCCESS! Generated: {OUTPUT_TFLITE_PATH}")
-        print(f"📊 Model Size: {size_mb:.2f} MB")
-        print("🚀 Copy this file to your assets/models folder and rebuild Flutter.")
+        print(f"Saved: {OUTPUT_TFLITE_PATH} ({size_mb:.2f} MB)")
 
     except Exception as e:
-        print(f"\n❌ TRANSPLANT FAILED: {e}")
+        print(f"Transplant failed: {e}")
 
 if __name__ == '__main__':
     transplant_and_convert()

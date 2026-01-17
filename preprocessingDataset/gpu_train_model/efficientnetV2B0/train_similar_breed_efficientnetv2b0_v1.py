@@ -4,7 +4,7 @@ import json
 import numpy as np
 import tensorflow as tf
 
-# --- CHANGE 1: Import EfficientNetV2B0 and its preprocessing ---
+# Import EfficientNetV2B0 and the matching image preprocessor
 from tensorflow.keras.applications import EfficientNetV2B0
 from tensorflow.keras.applications.efficientnet_v2 import preprocess_input
 # ---
@@ -18,11 +18,12 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 import sys
 
-# === 1. GPU Configuration & Mixed Precision ===
-print("--- Enabling Mixed Precision (mixed_float16) ---")
+# Turn on mixed precision using mixed_float16
+print("--- Enabling Mixed Precision mixed_float16 ---")
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
 AUTOTUNE = tf.data.AUTOTUNE
 
+# Check for GPU and set memory growth if found
 print("--- Checking for GPU ---")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -38,45 +39,40 @@ else:
     print("⚠️ WARNING: No GPU found by TensorFlow. Training will be slow.")
 print("-------------------------")
 
-# === 2. Configuration (Aggressive Hypertuning for Expert Model) ===
-# --- CHANGE 2: Point to the specialized 5-class dataset ---
+# Settings for the similar breed expert model
 DATA_DIR = '../../similar_breed_dataset'
-# ---
 IMG_SIZE = (224, 224)
-# --- CHANGE 3: Use the proven BATCH_SIZE for best generalization ---
 BATCH_SIZE = 32
-# ---
-# --- CHANGE 4: Give the model more time to learn this harder task ---
-EPOCHS_PHASE1 = 25   # Was 20
-EPOCHS_PHASE2 = 50   # Was 30
-EARLYSTOP_PATIENCE = 15 # Was 10
-# ---
+EPOCHS_PHASE1 = 25
+EPOCHS_PHASE2 = 50
+EARLYSTOP_PATIENCE = 15
 LR_PHASE1 = 1e-3
-LR_PHASE2 = 8e-6     # Our champion fine-tuning LR
-LABEL_SMOOTHING = 0.1 
+LR_PHASE2 = 8e-6
+LABEL_SMOOTHING = 0.1
 DROPOUT_RATE = 0.5
 DENSE_UNITS = 256
 UNFREEZE_LAYERS = 50
 
-# === 3. tf.data.Dataset Pipeline ===
+# Set up the data pipeline for the similar breed dataset
 print(f"\n--- Setting up tf.data.Dataset pipeline for '{DATA_DIR}' ---")
 
-# --- Helper functions (using EfficientNet's preprocess_input) ---
+# This function gets an image and a label
+# It makes random changes and runs the model preprocessor
+# Input image tensor and label tensor
+# Output image tensor and the same label
 def augment_and_preprocess(image, label):
-    """Applies data augmentation and EfficientNetV2B0 preprocessing."""
-    # Data Augmentation (Aggressive)
+    # Flip left right and up down
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
-    
+
     image_shape = tf.shape(image)
     crop_size = tf.cast(tf.cast(image_shape[:2], tf.float32) * tf.random.uniform(shape=[], minval=0.6, maxval=1.0), tf.int32)
     image = tf.image.random_crop(image, size=[crop_size[0], crop_size[1], 3])
     image = tf.image.resize(image, [IMG_SIZE[0], IMG_SIZE[1]])
     image = tf.image.random_brightness(image, max_delta=0.4)
-    
+
     image = preprocess_input(image)
     return image, label
-# ---
 
 # Create the initial training dataset from directories
 train_ds_raw = tf.keras.utils.image_dataset_from_directory(

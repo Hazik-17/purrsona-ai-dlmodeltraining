@@ -3,8 +3,9 @@ import tensorflow as tf
 import argparse # We'll use argparse to read command-line arguments
 
 def convert_model_to_tflite(keras_model_path, tflite_model_path):
-    """
-    Loads a single .keras model and converts it into a .tflite model.
+    """Convert one Keras model file into a TFLite file.
+
+    Inputs: paths for the .keras file and the .tflite output.
     """
     print(f"\n--- Converting '{keras_model_path}' ---")
 
@@ -45,22 +46,13 @@ def convert_model_to_tflite(keras_model_path, tflite_model_path):
         print(f"  - ❌ ERROR during conversion: {e}")
 
 def main():
-    # Set up the command-line argument parser
-    parser = argparse.ArgumentParser(description="Convert a single .keras model to .tflite.")
-    
-    # Add an argument for the input file path (required)
-    parser.add_argument(
-        "input_model", 
-        type=str, 
-        help="The path to the input .keras model file. (e.g., cat_vs_not_cat.keras)"
-    )
-    
-    # Add an argument for the output file path (required)
-    parser.add_argument(
-        "output_model", 
-        type=str, 
-        help="The desired name for the output .tflite file. (e.g., gatekeeper_model.tflite)"
-    )
+    parser = argparse.ArgumentParser(description="Convert one .keras model to .tflite")
+
+    # Input .keras model path (required)
+    parser.add_argument("input_model", type=str, help="Path to the .keras model file")
+
+    # Output .tflite path (required)
+    parser.add_argument("output_model", type=str, help="Output .tflite file path")
     
     args = parser.parse_args()
 

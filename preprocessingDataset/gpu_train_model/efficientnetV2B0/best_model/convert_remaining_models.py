@@ -9,39 +9,36 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D, BatchNormalization
 from tensorflow.keras.regularizers import l2
 
-# ==========================================
-# CONFIGURATION
-# ==========================================
-# 1. Gatekeeper Config (Cat vs Not Cat)
+# Simple config values for conversion
 GATEKEEPER_IN = 'cat_vs_not_cat.keras'
 GATEKEEPER_OUT = 'gatekeeper_model.tflite'
-GATEKEEPER_CLASSES = 2  # [cat, not_cat]
+GATEKEEPER_CLASSES = 2  # cat vs not_cat
 
-# 2. Expert Config (The Specialized 5-Breed Model)
 EXPERT_IN = 'similar_breed_expert_effnet_v1.keras'
 EXPERT_OUT = 'similar_breed_expert_model.tflite'
-EXPERT_CLASSES = 5 # Based on your previous comment
+EXPERT_CLASSES = 5  # number of classes for this expert model
 
-# Shared Architecture Settings (Must match training script)
+# Model shape and layers used to rebuild a clean architecture
 IMG_SIZE = (224, 224)
 DENSE_UNITS = 256
 DROPOUT_RATE = 0.5
 
 def transplant_and_convert(input_path, output_path, num_classes):
-    print(f"\n==================================================")
-    print(f" PROCESSING: {input_path}")
-    print(f" TARGET CLASSES: {num_classes}")
-    print(f"==================================================")
+    """Rebuild a clean model, load old weights, and export to TFLite.
+
+    Steps: build clean model -> load old weights -> convert -> save.
+    """
+    print(f"\n=== Processing: {input_path} (classes={num_classes}) ===")
 
     if not os.path.exists(input_path):
         print(f"❌ Error: File '{input_path}' not found!")
         return
 
-    # 1. Force Float32 Policy (Global)
+    # Use float32 policy for stable conversion
     tf.keras.mixed_precision.set_global_policy('float32')
 
     try:
-        # 2. Build a FRESH, CLEAN Model Architecture
+        # Build a fresh clean model architecture (no top, imagenet base)
         print("  [1] Building clean architecture...")
         
         base_model = EfficientNetV2B0(
@@ -65,11 +62,11 @@ def transplant_and_convert(input_path, output_path, num_classes):
         dummy_input = tf.ones((1, 224, 224, 3))
         _ = clean_model(dummy_input)
 
-        # 3. Load the OLD model to grab weights
+        # Load the old trained model to get its learned weights
         print("  [2] Loading old model weights...")
         old_model = tf.keras.models.load_model(input_path, compile=False)
         
-        # 4. TRANSPLANT WEIGHTS
+        # Transfer weights from old model into the clean model
         print("  [3] Transplanting weights...")
         try:
             clean_model.set_weights(old_model.get_weights())
@@ -79,11 +76,11 @@ def transplant_and_convert(input_path, output_path, num_classes):
             print("Please verify how many classes this model actually has.")
             raise ve
 
-        # 5. Convert
+        # Prepare TFLite converter
         print("  [4] Initializing Converter...")
         converter = tf.lite.TFLiteConverter.from_keras_model(clean_model)
         
-        # Pure TFLite Settings
+        # Converter settings: allow builtin ops and float32
         converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS]
         converter.target_spec.supported_types = [tf.float32]
         
@@ -93,7 +90,7 @@ def transplant_and_convert(input_path, output_path, num_classes):
                 yield [np.zeros((1, 224, 224, 3), dtype=np.float32)]
         converter.representative_dataset = representative_dataset_gen
 
-        print("  [5] Converting... (This may take 1-2 mins)")
+        print("  [5] Converting... (may take a minute)")
         tflite_model = converter.convert()
 
         # 6. Save

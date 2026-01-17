@@ -50,22 +50,22 @@ DROPOUT_RATE = 0.5
 DENSE_UNITS = 256
 UNFREEZE_LAYERS = 125  # 🔧 Fine-tune deeper layers (was 75)
 
-# -------------------------
+print("Using mixed_float16 policy")
 # 2) Data pipeline
 # -------------------------
 print("\n--- Setting up tf.data.Dataset pipeline ---")
-
+print("Checking for GPU...")
 def augment_and_preprocess(image, label):
     # 🔧 Enhanced augmentations for variety
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
 
     # Rotation and random zoom
-    angle = tf.random.uniform([], -0.20, 0.20)  # ~±11 degrees
+          print(f"Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
     image = tfa.image.rotate(image, angle)
-    scales = tf.random.uniform([], 0.8, 1.2)
+          print(f"Could not configure GPU: {e}")
     new_size = tf.cast(tf.cast(tf.shape(image)[:2], tf.float32) * scales, tf.int32)
-    image = tf.image.resize(image, new_size)
+     print("No GPU found. Training may be slow.")
     image = tf.image.resize_with_crop_or_pad(image, 224, 224)
 
     # 🔧 Stronger color augmentations
@@ -85,7 +85,7 @@ def augment_and_preprocess(image, label):
 
 # Dataset loading
 train_ds_raw = tf.keras.utils.image_dataset_from_directory(
-    os.path.join(DATA_DIR, 'train'),
+     """Apply random augmentations and preprocess for MobileNetV3."""
     validation_split=0.2,
     subset="training",
     seed=42,

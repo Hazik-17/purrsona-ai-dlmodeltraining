@@ -18,25 +18,24 @@ import seaborn as sns
 # -------------------------
 # 1) Setup & config
 # -------------------------
-print("--- Enabling Mixed Precision (mixed_float16) ---")
+print("Using mixed_float16 policy")
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
 AUTOTUNE = tf.data.AUTOTUNE
 
-print("--- Checking for GPU ---")
+print("Checking for GPU...")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-        print(f"✅ Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
+        print(f"Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
     except RuntimeError as e:
-        print(f"⚠️ Could not configure GPU: {e}")
+        print(f"Could not configure GPU: {e}")
 else:
-    print("⚠️ WARNING: No GPU found by TensorFlow. Training will be slow.")
-print("-------------------------")
+    print("No GPU found. Training may be slow.")
 
-# === Hyperparameters (your original) ===
+# === Hyperparameters (my original) ===
 DATA_DIR = '../../../output'
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 64
@@ -145,7 +144,7 @@ reduce_lr = ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.5, min_lr
 # -------------------------
 # 4) Phase 1 training
 # -------------------------
-print("\n🔁 Phase 1: Training top layers")
+print("Phase 1: training top layers")
 model.compile(optimizer=Adam(learning_rate=LR_PHASE1),
               loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=LABEL_SMOOTHING),
               metrics=['accuracy'])
@@ -169,7 +168,7 @@ print("Saved Phase 1 plot.")
 # -------------------------
 # 5) Phase 2 fine-tune
 # -------------------------
-print(f"\n🔁 Phase 2: Fine-tuning last {UNFREEZE_LAYERS} layers")
+print(f"Phase 2: fine-tuning last {UNFREEZE_LAYERS} layers")
 for layer in base_model.layers[-UNFREEZE_LAYERS:]:
     if not isinstance(layer, BatchNormalization):
         layer.trainable = True
@@ -197,11 +196,11 @@ print("Saved Phase 2 plot.")
 # -------------------------
 # 6) Final evaluation (robust)
 # -------------------------
-print("\n📊 Final evaluation on test set (robust)")
+print("Final evaluation on test set")
 
 # Evaluate using model.evaluate (uses whole dataset)
 loss, accuracy = model.evaluate(test_ds, verbose=2)
-print(f"✅ Test accuracy (model.evaluate): {accuracy * 100:.2f}%  — loss: {loss:.4f}")
+print(f"Test accuracy (model.evaluate): {accuracy * 100:.2f}%  — loss: {loss:.4f}")
 
 # Gather y_true and y_pred reliably (iterate until exhaustion)
 y_true = []
@@ -223,7 +222,7 @@ print("Prediction distribution (class_index:count):", dict(zip(unique_preds.toli
 
 # If model predicts only one class, this will show here and we can debug preprocessing/labels
 if len(unique_preds) == 1:
-    print("⚠️ Warning: model predicted a single class for all test samples. This usually indicates a preprocessing or label mismatch.")
+    print("Warning: model predicted a single class for all test samples. This often means a preprocessing or label mismatch.")
 
 # Classification report
 print("\nClassification Report:")
@@ -242,7 +241,7 @@ print("Saved confusion_matrix_test.png")
 # -------------------------
 # 7) Sanity: evaluate training set performance to detect under/overfit
 # -------------------------
-print("\nEvaluating training accuracy for sanity check (may take time)...")
+print("Evaluating training accuracy for sanity check (may take time)")
 train_loss, train_accuracy = model.evaluate(train_ds, verbose=2)
 print(f"Training accuracy: {train_accuracy * 100:.2f}%  — loss: {train_loss:.4f}")
 
@@ -251,11 +250,11 @@ print(f"Training accuracy: {train_accuracy * 100:.2f}%  — loss: {train_loss:.4
 # -------------------------
 model_path = 'breed_expert_mobilenetv3_large.keras'
 model.save(model_path)
-print(f"\n💾 Model saved as '{model_path}'")
+print(f"Model saved as '{model_path}'")
 
 # reload and evaluate quickly to ensure saved weights are correct
 reloaded = tf.keras.models.load_model(model_path)
 loss_r, acc_r = reloaded.evaluate(test_ds, verbose=2)
 print(f"Reloaded model test accuracy: {acc_r * 100:.2f}%  — loss: {loss_r:.4f}")
 
-print("\n✅ Training, evaluation, and saving complete.")
+print("Training, evaluation, and saving complete.")

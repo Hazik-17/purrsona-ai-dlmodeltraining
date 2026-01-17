@@ -15,24 +15,22 @@ from sklearn.metrics import classification_report
 import sys
 
 # === 1. GPU Configuration & Mixed Precision ===
-print("--- Enabling Mixed Precision (mixed_float16) ---")
+print("Using mixed_float16 policy")
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
 AUTOTUNE = tf.data.AUTOTUNE
 
-print("--- Checking for GPU ---")
+print("Checking for GPU...")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-        print(f"✅ Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
-        print("   GPU will be used for training.")
+        print(f"Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
     except RuntimeError as e:
-        print(f"⚠️ Could not configure GPU: {e}")
+        print(f"Could not configure GPU: {e}")
 else:
-    print("⚠️ WARNING: No GPU found by TensorFlow. Training will be slow.")
-print("-------------------------")
+    print("No GPU found. Training may be slow.")
 
 # === 2. Configuration (Run 8.0 settings + MixUp) ===
 DATA_DIR = '../../output'
@@ -50,7 +48,7 @@ UNFREEZE_LAYERS = 50
 MIXUP_ALPHA = 0.2  # --- MixUp Regularization Parameter ---
 
 # === 3. tf.data.Dataset Pipeline ===
-print("\n--- Setting up tf.data.Dataset pipeline (with MixUp) ---")
+print("Setting up tf.data pipeline (with MixUp)")
 
 # --- Helper functions (preprocess_input is the same for Large/Small) ---
 def augment_and_preprocess(image, label):
@@ -147,7 +145,7 @@ print(f"  - Test images: {test_size}     -> Test steps: {test_steps}")
 # ---
 
 # --- Create the high-performance data pipelines ---
-print("Configuring training pipeline (train_ds)...")
+print("Configuring training pipeline")
 # Create the base pipeline (augmentation)
 # --- We must drop the remainder batch for MixUp to work reliably when zipping ---
 train_ds = train_ds_raw.map(augment_and_preprocess, num_parallel_calls=AUTOTUNE)
@@ -163,12 +161,12 @@ mixed_train_ds = zipped_ds.map(mixup_batch, num_parallel_calls=AUTOTUNE)
 mixed_train_ds = mixed_train_ds.prefetch(buffer_size=AUTOTUNE)
 # ---
 
-print("Configuring validation pipeline (val_ds)...")
+print("Configuring validation pipeline")
 val_ds = val_ds_raw.map(lambda x, y: (preprocess_input(x), y), num_parallel_calls=AUTOTUNE)
 val_ds = val_ds.batch(BATCH_SIZE)
 val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
 
-print("Configuring test pipeline (test_ds)...")
+print("Configuring test pipeline")
 test_ds = test_ds_raw.map(lambda x, y: (preprocess_input(x), y), num_parallel_calls=AUTOTUNE)
 test_ds = test_ds.batch(BATCH_SIZE)
 test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
@@ -177,11 +175,10 @@ test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 class_names = train_ds_raw.class_names
 num_classes = len(class_names)
 class_indices = {name: i for i, name in enumerate(class_names)}
-print(f"\nFound {num_classes} classes: {class_indices}")
-
-print("\n💾 Saving class indices to breed_expert_class_indices.json")
+print(f"Found {num_classes} classes: {class_indices}")
 with open('breed_expert_class_indices.json', 'w') as f:
     json.dump(class_indices, f)
+print("Saved class indices to breed_expert_class_indices.json")
 # --- End of tf.data setup ---
 
 
@@ -206,7 +203,7 @@ early_stop = EarlyStopping(monitor='val_loss', patience=EARLYSTOP_PATIENCE, rest
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.5, min_lr=1e-8, verbose=1)
 
 # === 5. Phase 1: Train top layers only ===
-print("\n🔁 Starting Phase 1: Train top layers only (MobileNetV3Large + MixUp)")
+print("Starting Phase 1: Train top layers")
 model.compile(
     optimizer=Adam(learning_rate=LR_PHASE1),
     # --- IMPORTANT: When using MixUp, we must use standard crossentropy (no label smoothing) ---
@@ -228,10 +225,11 @@ history1 = model.fit(
 plt.figure(figsize=(12, 5))
 plt.subplot(1,2,1); plt.plot(history1.history['accuracy'], label='train_acc'); plt.plot(history1.history['val_accuracy'], label='val_acc'); plt.title('Phase 1 Accuracy'); plt.legend()
 plt.subplot(1,2,2); plt.plot(history1.history['loss'], label='train_loss'); plt.plot(history1.history['val_loss'], label='val_loss'); plt.title('Phase 1 Loss'); plt.legend()
-plt.savefig('phase_1_training_plot_mixup.png'); print("\nSaved Phase 1 plot as 'phase_1_training_plot_mixup.png'")
+plt.savefig('phase_1_training_plot_mixup.png')
+print("Saved Phase 1 plot: phase_1_training_plot_mixup.png")
 
 # === 6. Phase 2: Fine-tune last 50 layers ===
-print(f"\n🔁 Starting Phase 2: Fine-tuning last {UNFREEZE_LAYERS} layers (MobileNetV3Large + MixUp)")
+print(f"Starting Phase 2: Fine-tuning last {UNFREEZE_LAYERS} layers")
 for layer in base_model.layers[-UNFREEZE_LAYERS:]: 
     if not isinstance(layer, BatchNormalization):
         layer.trainable = True
@@ -256,12 +254,13 @@ history2 = model.fit(
 plt.figure(figsize=(12, 5));
 plt.subplot(1,2,1); plt.plot(history2.history['accuracy'], label='train_acc'); plt.plot(history2.history['val_accuracy'], label='val_acc'); plt.title('Phase 2 Accuracy'); plt.legend()
 plt.subplot(1,2,2); plt.plot(history2.history['loss'], label='train_loss'); plt.plot(history2.history['val_loss'], label='val_loss'); plt.title('Phase 2 Loss'); plt.legend()
-plt.savefig('phase_2_training_plot_mixup.png'); print("\nSaved Phase 2 plot as 'phase_2_training_plot_mixup.png'")
+plt.savefig('phase_2_training_plot_mixup.png')
+print("Saved Phase 2 plot: phase_2_training_plot_mixup.png")
 
 # === 7. Final Evaluation on Test Set ===
-print("\n📊 Final evaluation on test set (MobileNetV3Large + MixUp):")
+print("Final evaluation on test set")
 loss, accuracy = model.evaluate(test_ds, verbose=2, steps=test_steps)
-print(f"✅ Test accuracy: {accuracy * 100:.2f}%")
+print(f"Test accuracy: {accuracy * 100:.2f}%")
 
 # Detailed classification report
 print("\nGenerating Classification Report...")
@@ -285,6 +284,7 @@ train_loss, train_accuracy = model.evaluate(mixed_train_ds.take(steps_per_epoch)
 print(f"Training accuracy: {train_accuracy * 100:.2f}%")
 
 # === 8. Save the trained model ===
-model.save('breed_expert_mobilenetv3_large_mixup.keras'); print("\n💾 Model saved as 'breed_expert_mobilenetv3_large_mixup.keras'")
+model.save('breed_expert_mobilenetv3_large_mixup.keras')
+print("Model saved as 'breed_expert_mobilenetv3_large_mixup.keras'")
 
-print("✅ Training complete and all files saved.")
+print("Training complete and all files saved.")

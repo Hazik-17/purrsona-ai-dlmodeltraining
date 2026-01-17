@@ -18,11 +18,12 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 import sys
 
-# === 1. GPU Configuration & Mixed Precision ===
-print("--- Enabling Mixed Precision (mixed_float16) ---")
+# Turn on mixed precision using mixed_float16
+print("--- Enabling Mixed Precision mixed_float16 ---")
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
 AUTOTUNE = tf.data.AUTOTUNE
 
+# Check if a GPU is available and set memory growth
 print("--- Checking for GPU ---")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -38,43 +39,42 @@ else:
     print("⚠️ WARNING: No GPU found by TensorFlow. Training will be slow.")
 print("-------------------------")
 
-# === 2. Configuration (Using champion hyperparameters) ===
+# Training settings and file locations
 DATA_DIR = '../../output'
-IMG_SIZE = (224, 224) # ResNet50 is also trained on 224x224
-# --- CHANGE 2: Smaller BATCH_SIZE for heavier model ---
-BATCH_SIZE = 32      # Was 64. ResNet50 is larger, so this is safer for 12GB VRAM.
-# ---
+IMG_SIZE = (224, 224) # image size used for this model
+BATCH_SIZE = 32
 EPOCHS_PHASE1 = 20
 EPOCHS_PHASE2 = 30
 LR_PHASE1 = 1e-3
-LR_PHASE2 = 8e-6     # Our champion fine-tuning LR
+LR_PHASE2 = 8e-6
 EARLYSTOP_PATIENCE = 10
-LABEL_SMOOTHING = 0.1 
+LABEL_SMOOTHING = 0.1
 DROPOUT_RATE = 0.5
 DENSE_UNITS = 256
 UNFREEZE_LAYERS = 50
 
-# === 3. tf.data.Dataset Pipeline ===
+# Set up the data pipeline for training validation and test data
 print("\n--- Setting up tf.data.Dataset pipeline ---")
 
-# --- Helper functions (using ResNet's preprocess_input) ---
+# This function gets an image and a label
+# It makes random image changes and runs the model preprocessor
+# Input  image tensor and label tensor
+# Output image tensor and the same label
 def augment_and_preprocess(image, label):
-    """Applies data augmentation and ResNet50 preprocessing."""
-    # Data Augmentation
+    # Flip the image left or right
     image = tf.image.random_flip_left_right(image)
+    # Flip the image up or down
     image = tf.image.random_flip_up_down(image)
-    
+
     image_shape = tf.shape(image)
     crop_size = tf.cast(tf.cast(image_shape[:2], tf.float32) * tf.random.uniform(shape=[], minval=0.6, maxval=1.0), tf.int32)
     image = tf.image.random_crop(image, size=[crop_size[0], crop_size[1], 3])
     image = tf.image.resize(image, [IMG_SIZE[0], IMG_SIZE[1]])
     image = tf.image.random_brightness(image, max_delta=0.4)
-    
-    # --- CHANGE 3: Using ResNet's specific preprocessor ---
+
+    # Run ResNet style preprocessor on the image
     image = preprocess_input(image)
-    # ---
     return image, label
-# ---
 
 # Create the initial training dataset from directories
 train_ds_raw = tf.keras.utils.image_dataset_from_directory(
@@ -144,7 +144,7 @@ test_ds = test_ds_raw.map(lambda x, y: (preprocess_input(x), y), num_parallel_ca
 test_ds = test_ds.batch(BATCH_SIZE)
 test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 
-# --- Get class names and save class_indices.json ---
+# Get class names and save a map from name to index
 class_names = train_ds_raw.class_names
 num_classes = len(class_names)
 class_indices = {name: i for i, name in enumerate(class_names)}
@@ -153,7 +153,7 @@ print(f"\nFound {num_classes} classes: {class_indices}")
 print("\n💾 Saving class indices to breed_expert_class_indices_resnet50.json")
 with open('breed_expert_class_indices_resnet50.json', 'w') as f:
     json.dump(class_indices, f)
-# --- End of tf.data setup ---
+# End of dataset setup
 
 
 # === 4. Model Setup ===

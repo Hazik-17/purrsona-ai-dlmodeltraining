@@ -6,7 +6,7 @@ import csv
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-# === Configuration ===
+# Settings for preprocessing and which breeds to use
 IMAGES_DIR = 'images'
 ANNOTATION_FILE = 'annotations/list.txt'
 OUTPUT_DIR = 'output_3breeds'
@@ -17,6 +17,9 @@ SELECTED_BREEDS = ['Persian', 'Sphynx', 'Bombay', 'Bengal', 'Ragdoll', 'Maine']
 
 # === Utilities ===
 def load_selected_cat_images(annotation_file, selected_breeds):
+    # This function reads the annotation file and finds images for chosen breeds
+    # Input the annotation file and a list of breeds to keep
+    # Output a map from breed name to list of image file names
     cat_images = {}
     with open(annotation_file, 'r') as f:
         lines = f.readlines()[6:]
@@ -32,6 +35,9 @@ def load_selected_cat_images(annotation_file, selected_breeds):
     return cat_images
 
 def augment_image(img):
+    # This function makes simple new images from one image
+    # Input an image loaded by cv2
+    # Output a list of a few new images
     augmented = []
     augmented.append(cv2.flip(img, 1))
     h, w = img.shape[:2]
@@ -40,6 +46,9 @@ def augment_image(img):
     return augmented
 
 def preprocess_and_save(img_path, dest_path):
+    # This function loads an image resizes it and saves it to a new place
+    # Input path to source image and path to destination
+    # Output the image array or None if load failed
     img = cv2.imread(img_path)
     if img is None:
         return None
@@ -49,15 +58,14 @@ def preprocess_and_save(img_path, dest_path):
     return img
 
 def main():
+    # This is the main run function
+    # It creates folders and saves images and a labels file
     cat_images = load_selected_cat_images(ANNOTATION_FILE, SELECTED_BREEDS)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     train_labels = []
     test_labels = []
 
-    # Use ImageDataGenerator to get class indices
     breed_to_idx = {breed: i for i, breed in enumerate(SELECTED_BREEDS)}
-
-
 
     for breed, images in cat_images.items():
         train_imgs, test_imgs = train_test_split(images, test_size=TEST_SIZE, random_state=42)
@@ -82,13 +90,14 @@ def main():
                             cv2.imwrite(aug_dest, (aug * 255).astype(np.uint8))
                             train_labels.append([aug_name, breed, breed_to_idx[breed]])
 
-    # Save new labels.csv
+    # Save labels file in the output folder
     with open(os.path.join(OUTPUT_DIR, 'labels.csv'), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['filename', 'breed', 'label'])
         writer.writerows(train_labels + test_labels)
 
-    print("✅ Preprocessing done for 3 breeds!")
+    print('Preprocessing done for selected breeds')
+
 
 if __name__ == "__main__":
     main()

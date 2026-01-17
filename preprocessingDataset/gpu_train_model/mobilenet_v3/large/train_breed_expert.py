@@ -14,56 +14,53 @@ from tensorflow.keras.regularizers import l2
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 
-# === GPU Configuration Check ===
-# Add this section to check for and configure the GPU
+# Check for GPU and set memory growth
 print("--- Checking for GPU ---")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
-        # Enable memory growth for all GPUs
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         logical_gpus = tf.config.experimental.list_logical_devices('GPU')
         print(f"✅ Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
         print("   GPU will be used for training.")
     except RuntimeError as e:
-        # Memory growth must be set before GPUs have been initialized
         print(f"⚠️ Could not configure GPU: {e}")
         print("   Training will proceed on CPU.")
 else:
     print("⚠️ WARNING: No GPU found by TensorFlow.")
-    print("   Training will run on CPU (this may be slow).")
+    print("   Training will run on CPU this may be slow.")
 print("-------------------------")
-# === End of GPU Check ===
 
 
-# === Configuration ===
+# Training file locations and settings
 DATA_DIR = '../../output'
 IMG_SIZE = (224, 224)
-# --- CHANGE: Increased BATCH_SIZE for faster GPU training ---
-BATCH_SIZE = 64  # Was 16. Try 64 or 128.
-# ---
+# Batch size used for these runs
+BATCH_SIZE = 64
 EPOCHS_PHASE1 = 20
 EPOCHS_PHASE2 = 30
 LR_PHASE1 = 1e-3
 LR_PHASE2 = 8e-6
 EARLYSTOP_PATIENCE = 10
-LABEL_SMOOTHING = 0.1 
+LABEL_SMOOTHING = 0.1
 DROPOUT_RATE = 0.5
 DENSE_UNITS = 256
 UNFREEZE_LAYERS = 50
 
-# === Check class distributions ===
+# Print how many images are in each class folder
 def print_class_distribution(data_dir, subset):
+    # This function finds class folders and counts images
+    # Input  folder path and subset name like train or test
+    # Output list of class names
     print(f"\nClass distribution in {subset}:")
     path = os.path.join(data_dir, subset)
-    # Ensure 'path' exists before listing its contents
     if not os.path.isdir(path):
-        print(f"  - ⚠️  Warning: Directory not found: {path}")
+        print(f"  - Warning Directory not found {path}")
         return []
     classes = sorted([d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))])
     for c in classes:
-        # Count common image formats
+        # Count common image files in each class folder
         count = len(glob.glob(os.path.join(path, c, '*.jpg'))) + \
                 len(glob.glob(os.path.join(path, c, '*.png'))) + \
                 len(glob.glob(os.path.join(path, c, '*.jpeg')))
@@ -83,7 +80,7 @@ if not test_classes:
 assert set(train_classes) == set(test_classes), "Mismatch in train/test class folders!"
 
 
-# === Data Generators with MobileNetV3 preprocessing ===
+# Create data generators and use model preprocessor
 train_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
     rotation_range=40,
@@ -128,14 +125,15 @@ test_generator = test_datagen.flow_from_directory(
     shuffle=False
 )
 
+# Show the map from class name to index
 print("\nClass indices:", train_generator.class_indices)
 
-# === Debug print: check a batch of images and labels ===
+# Get a sample batch to check shapes
 images, labels = next(train_generator)
 print(f"Train batch images shape: {images.shape}")
 print(f"Train batch labels shape: {labels.shape}")
 
-# === Model Setup ===
+# Build the model and set up the base network
 num_classes = len(train_generator.class_indices)
 
 base_model = MobileNetV3Small(
@@ -158,8 +156,8 @@ model = Sequential([
 early_stop = EarlyStopping(monitor='val_loss', patience=EARLYSTOP_PATIENCE, restore_best_weights=True) 
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.5, min_lr=1e-8, verbose=1)
 
-# === Phase 1: Train top layers only ===
-print("\n🔁 Starting Phase 1: Train top layers only")
+# Phase 1 train only the new top layers
+print("\n🔁 Starting Phase 1 train top layers only")
 model.compile(
     optimizer=Adam(learning_rate=LR_PHASE1),
     loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=LABEL_SMOOTHING),
@@ -191,9 +189,9 @@ plt.savefig('phase_1_training_plot.png')
 print("\nSaved Phase 1 plot as 'phase_1_training_plot.png'")
 # plt.show() # plt.show() can block execution, so savefig is safer for scripts
 
-# === Phase 2: Fine-tune last 50 layers ===
-print(f"\n🔁 Starting Phase 2: Fine-tuning last {UNFREEZE_LAYERS} layers")
-for layer in base_model.layers[-UNFREEZE_LAYERS:]: 
+# Phase 2 fine tune the last layers of the base model
+print(f"\n🔁 Starting Phase 2 fine tuning last {UNFREEZE_LAYERS} layers")
+for layer in base_model.layers[-UNFREEZE_LAYERS:]:
     if not isinstance(layer, BatchNormalization):
         layer.trainable = True
 
@@ -229,12 +227,12 @@ plt.savefig('phase_2_training_plot.png')
 print("\nSaved Phase 2 plot as 'phase_2_training_plot.png'")
 # plt.show()
 
-# === Final Evaluation on Test Set ===
-print("\n📊 Final evaluation on test set:")
+# Run final test set evaluation and print accuracy
+print("\n📊 Final evaluation on test set")
 loss, accuracy = model.evaluate(test_generator, verbose=2)
 print(f"✅ Test accuracy: {accuracy * 100:.2f}%")
 
-# Detailed classification report
+# Make a classification report with per class scores
 test_generator.reset()
 y_pred_probs = model.predict(test_generator, verbose=2)
 y_pred = np.argmax(y_pred_probs, axis=1)
@@ -249,13 +247,12 @@ print("\nEvaluating training accuracy:")
 train_loss, train_accuracy = model.evaluate(train_generator, verbose=2)
 print(f"Training accuracy: {train_accuracy * 100:.2f}%")
 
-# === Save the trained model ===
+# Save the trained model file
 model.save('breed_expert_mobilenetV3.keras')
 print("\n💾 Model saved as 'breed_expert_mobilenetV3.keras'")
 
-# === Save class indices ===
+# Save the class name to index map to a json file
 import json
-
 print("\n💾 Saving class indices to breed_expert_class_indices.json")
 class_indices = train_generator.class_indices
 with open('breed_expert_class_indices.json', 'w') as f:

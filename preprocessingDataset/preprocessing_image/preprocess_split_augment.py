@@ -5,7 +5,6 @@ import random
 import csv
 from sklearn.model_selection import train_test_split
 
-# ==== Configuration ====
 IMAGES_DIR = 'images'
 ANNOTATION_FILE = 'annotations/list.txt'
 OUTPUT_DIR = 'output'
@@ -13,8 +12,10 @@ TARGET_SIZE = (224, 224)
 TEST_SIZE = 0.2
 AUGMENTATIONS_PER_IMAGE = 2
 
-# ==== Utilities ====
 
+# This function reads the annotation file and finds cat images
+# Input the annotation file path
+# Output a map of breed to list of image names
 def load_cat_images(annotation_file):
     cat_images = {}
     with open(annotation_file, 'r') as f:
@@ -22,24 +23,29 @@ def load_cat_images(annotation_file):
         for line in lines:
             parts = line.strip().split()
             image_name = parts[0] + '.jpg'
-            if image_name[0].isupper():  # Capitalized = cat
+            if image_name[0].isupper():
                 breed = image_name.split('_')[0]
                 if breed not in cat_images:
                     cat_images[breed] = []
                 cat_images[breed].append(image_name)
     return cat_images
 
+
+# This function makes new images by flipping or rotating
+# Input an image array
+# Output a small list of new images
 def augment_image(img):
     augmented = []
-    # Horizontal Flip
     augmented.append(cv2.flip(img, 1))
-    # Rotation
     h, w = img.shape[:2]
     M = cv2.getRotationMatrix2D((w//2, h//2), angle=random.randint(-15, 15), scale=1)
     augmented.append(cv2.warpAffine(img, M, (w, h)))
-    # Add more if needed (brightness, noise, etc.)
     return augmented[:AUGMENTATIONS_PER_IMAGE]
 
+
+# This function loads saves and resizes an image
+# Input path to source and path to destination
+# Output True when save succeeded False if load failed
 def preprocess_and_save(img_path, dest_path):
     img = cv2.imread(img_path)
     if img is None:
@@ -49,9 +55,10 @@ def preprocess_and_save(img_path, dest_path):
     cv2.imwrite(dest_path, (img * 255).astype(np.uint8))
     return True
 
-# ==== Main ====
+
+# Main run function that creates train test folders and labels
 def main():
-    print("📦 Loading annotation file...")
+    print('Loading annotation file')
     cat_images = load_cat_images(ANNOTATION_FILE)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -74,7 +81,6 @@ def main():
                 if preprocess_and_save(src, dest):
                     (train_labels if split_name == 'train' else test_labels).append([img_file, breed, breed_to_idx[breed]])
 
-                    # Augmentation only on training set
                     if split_name == 'train':
                         img = cv2.imread(dest)
                         aug_imgs = augment_image(img)
@@ -84,13 +90,13 @@ def main():
                             cv2.imwrite(aug_dest, aug)
                             train_labels.append([aug_name, breed, breed_to_idx[breed]])
 
-    # Save labels.csv
     with open(os.path.join(OUTPUT_DIR, 'labels.csv'), mode='w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['filename', 'breed', 'label'])
         writer.writerows(train_labels + test_labels)
 
-    print(f"✅ Done. Train: {len(train_labels)}, Test: {len(test_labels)}")
+    print(f'Done. Train {len(train_labels)} Test {len(test_labels)}')
+
 
 if __name__ == "__main__":
     main()

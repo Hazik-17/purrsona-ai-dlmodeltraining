@@ -3,26 +3,26 @@ import shutil
 import glob
 import random
 
-# --- Configuration ---
+# Configuration
+# Folder with 90 other animal folders (not cats)
+NOT_CAT_SOURCE_DIR = r'../others_animal'
 
-#    This is the folder that contains all 90 animal subfolders.
-NOT_CAT_SOURCE_DIR = r'../others_animal' 
-
-# 2. Path to your 12-breed dataset
+# Folder with your 12-breed cat dataset (train/test)
 CAT_SOURCE_DIR = '../output'
 
-# 3. Destination for the new, combined dataset
+# Where to save the new binary dataset
 DEST_DIR = 'cat_vs_not_cat_dataset'
 
-# 4. Settings
+# Split ratio and randomness for train/test split
 TEST_SPLIT_RATIO = 0.2
 RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
 
 def process_cat_images(cat_source_dir, dest_dir):
-    """
-    Finds all cat images from your 12-breed dataset and copies them
-    into the 'cat' class of the new dataset.
+    """Copy cat images from 12-breed dataset to new 'cat' folders.
+
+    Inputs: source folder and destination base folder.
+    Output: counts of copied train and test images.
     """
     print(f"\n--- Processing 'cat' images from '{cat_source_dir}' ---")
     cat_train_count = 0
@@ -59,9 +59,10 @@ def process_cat_images(cat_source_dir, dest_dir):
     return cat_train_count, cat_test_count
 
 def process_not_cat_images(not_cat_source_dir, dest_dir, split_ratio, seed):
-    """
-    Finds all non-cat images from your 90-animal dataset, splits them,
-    and copies them into the 'not_cat' class.
+    """Copy non-cat images from many animal folders into 'not_cat'.
+
+    The function shuffles each folder, splits into train/test,
+    and copies files to the destination.
     """
     print(f"\n--- Processing 'not_cat' images from '{not_cat_source_dir}' ---")
     not_cat_train_count = 0
@@ -113,27 +114,27 @@ def process_not_cat_images(not_cat_source_dir, dest_dir, split_ratio, seed):
     return not_cat_train_count, not_cat_test_count
 
 def main():
-    print(f"--- Starting Binary Dataset Creation ---")
-    
-    # Clean up old dataset if it exists
+    print("--- Starting Binary Dataset Creation ---")
+
+    # Remove old output if present so we start fresh
     if os.path.exists(DEST_DIR):
         print(f"Removing old dataset directory: '{DEST_DIR}'")
         shutil.rmtree(DEST_DIR)
 
-    # 1. Process cats from your 12-breed dataset
+    # Copy cat images from the 12-breed dataset
     cat_train_count, cat_test_count = process_cat_images(CAT_SOURCE_DIR, DEST_DIR)
 
-    # 2. Process not-cats from your 90-animal dataset
+    # Copy many non-cat animals into the not_cat class
     not_cat_train_count, not_cat_test_count = process_not_cat_images(NOT_CAT_SOURCE_DIR, DEST_DIR, TEST_SPLIT_RATIO, RANDOM_SEED)
 
-    print("\n--- ✅ Dataset Creation Complete! ---")
-    print("Final Dataset Summary:")
+    print("\n--- Done: Dataset Creation Complete ---")
+    print("Summary:")
     print(f"  Total Training Images: {cat_train_count + not_cat_train_count}")
-    print(f"    - 'cat':     {cat_train_count}")
-    print(f"    - 'not_cat': {not_cat_train_count}")
+    print(f"    - cat:     {cat_train_count}")
+    print(f"    - not_cat: {not_cat_train_count}")
     print(f"  Total Test Images: {cat_test_count + not_cat_test_count}")
-    print(f"    - 'cat':     {cat_test_count}")
-    print(f"    - 'not_cat': {not_cat_test_count}")
+    print(f"    - cat:     {cat_test_count}")
+    print(f"    - not_cat: {not_cat_test_count}")
     print(f"Dataset is ready in '{DEST_DIR}'")
 
 if __name__ == "__main__":
