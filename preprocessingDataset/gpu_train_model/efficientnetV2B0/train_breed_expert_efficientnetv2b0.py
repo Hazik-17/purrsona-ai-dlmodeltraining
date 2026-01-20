@@ -4,11 +4,9 @@ import json
 import numpy as np
 import tensorflow as tf
 
-# Import EfficientNetV2B0 and the matching image preprocessor
+
 from tensorflow.keras.applications import EfficientNetV2B0
 from tensorflow.keras.applications.efficientnet_v2 import preprocess_input
-# ---
-
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D, BatchNormalization
 from tensorflow.keras.optimizers import Adam
@@ -31,23 +29,22 @@ if gpus:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-        print(f"✅ Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
+        print(f"Found {len(gpus)} physical GPUs, {len(logical_gpus)} logical GPUs.")
         print("   GPU will be used for training.")
     except RuntimeError as e:
-        print(f"⚠️ Could not configure GPU: {e}")
+        print(f" Could not configure GPU: {e}")
 else:
-    print("⚠️ WARNING: No GPU found by TensorFlow. Training will be slow.")
+    print("WARNING: No GPU found by TensorFlow. Training will be slow.")
 print("-------------------------")
 
-# Training settings and file locations
+# Set parameters
 DATA_DIR = '../../output'
-IMG_SIZE = (224, 224) # image size used for the model
-# Batch size used for training
-BATCH_SIZE = 32
+IMG_SIZE = (224, 224) 
+BATCH_SIZE = 32 #tuning value
 EPOCHS_PHASE1 = 20
-EPOCHS_PHASE2 = 30
+EPOCHS_PHASE2 = 20 #tuning value
 LR_PHASE1 = 1e-3
-LR_PHASE2 = 8e-6 # small rate for fine tuning
+LR_PHASE2 = 8e-6  #tuning value
 EARLYSTOP_PATIENCE = 10
 LABEL_SMOOTHING = 0.1
 DROPOUT_RATE = 0.5
@@ -66,14 +63,13 @@ def augment_and_preprocess(image, label):
     image = tf.image.random_flip_left_right(image)
     # Flip the image up or down
     image = tf.image.random_flip_up_down(image)
-
     image_shape = tf.shape(image)
     crop_size = tf.cast(tf.cast(image_shape[:2], tf.float32) * tf.random.uniform(shape=[], minval=0.6, maxval=1.0), tf.int32)
     image = tf.image.random_crop(image, size=[crop_size[0], crop_size[1], 3])
     image = tf.image.resize(image, [IMG_SIZE[0], IMG_SIZE[1]])
     image = tf.image.random_brightness(image, max_delta=0.4)
 
-    # Run EfficientNetV2 style preprocessor on the image
+    # Run EfficientNetV2 preprocessor on the image
     image = preprocess_input(image)
     return image, label
 
@@ -149,13 +145,12 @@ num_classes = len(class_names)
 class_indices = {name: i for i, name in enumerate(class_names)}
 print(f"\nFound {num_classes} classes: {class_indices}")
 
-print("\n💾 Saving class indices to breed_expert_class_indices_effnet.json")
+print("\n Saving class indices to breed_expert_class_indices_effnet.json")
 with open('breed_expert_class_indices_effnet.json', 'w') as f:
     json.dump(class_indices, f)
 # --- End of tf.data setup ---
 
 
-# Build the model using EfficientNetV2B0 as the base
 base_model = EfficientNetV2B0(
     input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
     include_top=False,
@@ -177,7 +172,7 @@ early_stop = EarlyStopping(monitor='val_loss', patience=EARLYSTOP_PATIENCE, rest
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.5, min_lr=1e-8, verbose=1)
 
 # Phase 1 train only the top new layers
-print("\n🔁 Starting Phase 1 train top layers only EfficientNetV2B0")
+print("\n Starting Phase 1 train top layers only EfficientNetV2B0")
 model.compile(
     optimizer=Adam(learning_rate=LR_PHASE1),
     loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=LABEL_SMOOTHING),
@@ -201,7 +196,7 @@ plt.subplot(1,2,2); plt.plot(history1.history['loss'], label='train_loss'); plt.
 plt.savefig('phase_1_training_plot_effnet.png'); print("\nSaved Phase 1 plot as 'phase_1_training_plot_effnet.png'")
 
 # Phase 2 fine tune the last layers of the base model
-print(f"\n🔁 Starting Phase 2 fine tuning last {UNFREEZE_LAYERS} layers EfficientNetV2B0")
+print(f"\n Starting Phase 2 fine tuning last {UNFREEZE_LAYERS} layers EfficientNetV2B0")
 for layer in base_model.layers[-UNFREEZE_LAYERS:]:
     if not isinstance(layer, BatchNormalization):
         layer.trainable = True
@@ -229,9 +224,9 @@ plt.subplot(1,2,2); plt.plot(history2.history['loss'], label='train_loss'); plt.
 plt.savefig('phase_2_training_plot_effnet.png'); print("\nSaved Phase 2 plot as 'phase_2_training_plot_effnet.png'")
 
 # Run final test set evaluation and show accuracy
-print("\n📊 Final evaluation on test set EfficientNetV2B0")
+print("\n Final evaluation on test set EfficientNetV2B0")
 loss, accuracy = model.evaluate(test_ds, verbose=2, steps=test_steps)
-print(f"✅ Test accuracy: {accuracy * 100:.2f}%")
+print(f" Test accuracy: {accuracy * 100:.2f}%")
 
 # Make a detailed classification report for the test set
 print("\nGenerating Classification Report")
@@ -255,6 +250,6 @@ train_loss, train_accuracy = model.evaluate(train_ds, verbose=2, steps=steps_per
 print(f"Training accuracy: {train_accuracy * 100:.2f}%")
 
 # Save the final trained model to disk
-model.save('breed_expert_efficientnetv2b0_v2.keras'); print("\n💾 Model saved as 'breed_expert_efficientnetv2b0_v2.keras'")
+model.save('breed_expert_efficientnetv2b0_v2.keras'); print("\n Model saved as 'breed_expert_efficientnetv2b0_v2.keras'")
 
-print("✅ Training complete and all files saved.")
+print(" Training complete and all files saved.")
